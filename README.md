@@ -6,68 +6,68 @@ An asynchronous Telegram bot built with Python, **Aiogram 3**, **Google Gemini A
 
 ## 🌟 Key Features
 
-- **📱 Единое Главное Меню (`/menu`, `/start`):**
-  - Интерактивное бесшовное навигационное меню без мусорных сообщений.
-  - Подменю: `📅 Календарь`, `🎙️ Голосовые настройки`, `⚙️ Настройки профиля`, `ℹ️ Помощь`.
-- **🎙 Выбор провайдера озвучки (Voice Provider Switcher):**
-  - **🤖 Авто (auto):** Каскадная цепочка резервирования (`ElevenLabs` ➔ `Azure` ➔ `Google` ➔ `gTTS`).
-  - **🎭 ElevenLabs:** Ручной выбор только ElevenLabs (`eleven_multilingual_v2`).
-  - **☁️ Azure:** Ручной выбор только Microsoft Azure (`ru-RU-DmitryNeural`).
-  - **🔷 Google:** Ручной выбор только Google Cloud (`ru-RU-Neural2-C`).
-  - **▶️ Прослушать пример:** Тестовая озвучка выбранным диктором из меню.
-- **🔍 Автономная диагностика озвучки (`python scripts/check_tts.py`):**
-  - Независимый скрипт проверки всех 3 профессиональных голосовых сервисов с генерацией отчета.
+- **📱 Single Main Menu (`/menu`, `/start`):**
+  - Interactive seamless navigation menu without cluttering chat history.
+  - Submenus: `📅 Calendar`, `🎙️ Voice Settings`, `⚙️ Profile Settings`, `ℹ️ Help`.
+- **🎙 Voice Provider Switcher:**
+  - **🤖 Auto (auto):** Cascading fallback pipeline (`ElevenLabs` ➔ `Azure` ➔ `Google` ➔ `gTTS`).
+  - **🎭 ElevenLabs:** Manual selection for ElevenLabs only (`eleven_multilingual_v2`).
+  - **☁️ Azure:** Manual selection for Microsoft Azure (`ru-RU-DmitryNeural` / `en-US`).
+  - **🚗 Google / Gemini:** Manual selection for Google Cloud (`ru-RU-Neural2-C` / `en-US`).
+  - **▶️ Listen to Sample:** Test voice generation with the selected speaker.
+- **🔍 Autonomous Voice Diagnostics (`python scripts/check_tts.py`):**
+  - Standalone verification script for all 3 professional voice services with execution report.
 - **🎛 Response Mode Toggle (Text / Voice):**
-  - Быстрое переключение формата ответов (`🔊 Режим: ГОЛОС 🎙` / `📝 Режим: ТЕКСТ 💬`).
-- **📅 Google Calendar & Smart Reminders:** Планирование встреч и отправка адаптивных уведомлений за 1 день, 1 час и минуту в минуту.
+  - Fast output format switching (`🔊 Mode: VOICE 🎙` / `📝 Mode: TEXT 💬`).
+- **📅 Google Calendar & Smart Reminders:** Schedule events and send adaptive notifications 1 day, 1 hour, and exact-minute before the event.
 
 ---
 
-## 🔍 Диагностика провайдеров озвучки (`scripts/check_tts.py`)
+## 🔍 Voice Provider Diagnostics (`scripts/check_tts.py`)
 
-В проект включен независимый автономный инструмент проверки всех 3 профессиональных TTS-сервисов (ElevenLabs, Azure Speech, Google Neural2), который можно запускать **без запуска самого бота**.
+A standalone diagnostic tool is included to check all 3 professional TTS services (ElevenLabs, Azure Speech, Google Neural2) **without starting the Telegram bot**.
 
-### Команда запуска из консоли:
+### Terminal Execution:
 ```bash
 python scripts/check_tts.py
 ```
 
-### Что делает скрипт:
-1. Проверяет наличие ключей в `.env` и файла `google_keys.json`.
-2. Опрашивает API каждого провайдера и проверяет баланс/остаток символов лимита.
-3. Совершает тестовую генерацию аудиофайла фразы *"Тестовая озвучка"*.
-4. Выводит сводную таблицу статусов и точные пошаговые инструкции при обнаружении ошибок.
-5. Возвращает код `sys.exit(0)` при успехе или `sys.exit(1)` если хотя бы 1 провайдер сбоит.
+### Script Workflow:
+1. Verifies API key presence in `.env` and `google_keys.json`.
+2. Queries each provider's API to check character balance/quota remaining.
+3. Generates a test audio sample for *"Sample Voice Test"*.
+4. Displays a summary status table with step-by-step troubleshooting instructions upon error detection.
+5. Returns exit code `sys.exit(0)` on success or `sys.exit(1)` if any provider fails.
 
 ---
 
-## 🗺 Схема Главного Меню и Вложенности (Menu Hierarchy)
+## 🗺 Main Menu Hierarchy Structure
 
 ```text
-/menu или /start
- ├── 📅 Календарь
- │    ├── ➕ Новое событие (Инструкция по созданию)
- │    ├── 📋 Мои события (Список активных записей из БД)
- │    ├── 🗑️ Удалить событие (Очистить активные напоминания)
- │    └── ◀️ Назад в Главное меню
+/menu or /start
+ ├── 📅 Calendar
+ │    ├── ➕ New Event (Creation instructions)
+ │    ├── 📋 My Events (List of active records from DB)
+ │    ├── 🗑️ Delete Event (Clear active reminders)
+ │    └── ◀️ Back to Main Menu
  │
- ├── 🎙️ Голосовые настройки
- │    ├── 🔊/📝 Формат ответов: [ГОЛОС / ТЕКСТ] (Переключатель)
- │    ├── 🎭 Провайдер: [Авто / ElevenLabs / Azure / Google] (Переход в выбор диктора)
- │    │    ├── 🤖 Авто
- │    │    ├── 🎭 ElevenLabs
+ ├── 🎙️ Voice Settings
+ │    ├── 🔊/📝 Response Format: [VOICE / TEXT] (Toggle)
+ │    ├── 🎭 Voice Style: [Auto / ElevenLabs / Azure / Google] (Speaker selector)
+ │    │    ├── 🤖 Auto
+ │    │    ├── 👤 ElevenLabs
  │    │    ├── ☁️ Azure
- │    │    ├── 🔷 Google
- │    │    └── ◀️ Назад в Голосовые настройки
- │    ├── ▶️ Прослушать пример (Озвучка тестовой фразы)
- │    └── ◀️ Назад в Главное меню
+ │    │    ├── 🚗 Google / Gemini
+ │    │    └── ◀️ Back to Voice Settings
+ │    ├── ▶️ Listen to Sample (Sample audio playback)
+ │    └── ◀️ Back to Main Menu
  │
- ├── ⚙️ Настройки профиля
- │    ├── 🌐 Язык интерфейса: Русский 🇷🇺
- │    └── ◀️ Назад в Главное меню
+ ├── ⚙️ Profile Settings
+ │    ├── 🌐 Interface Language: English 🇬🇧
+ │    └── ◀️ Back to Main Menu
  │
- └── ℹ️ Помощь и о боте
-      └── ◀️ Назад в Главное меню
+ └── ℹ️ Help & About
+      └── ◀️ Back to Main Menu
 ```
 
 ---
