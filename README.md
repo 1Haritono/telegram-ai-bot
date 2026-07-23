@@ -1,13 +1,18 @@
-# Telegram AI Assistant Bot (Aiogram 3 + Gemini API + Google Calendar)
+# Telegram AI Assistant Bot (Aiogram 3 + Gemini API + Google Calendar & Speech)
 
-An asynchronous Telegram bot built with Python, **Aiogram 3**, **Google Gemini AI**, and **Google Calendar API**. It supports text, voice messages, automatic keyboard layout correction, proxy/VPN capabilities, event scheduling in Google Calendar, and multi-stage Telegram reminders.
+An asynchronous Telegram bot built with Python, **Aiogram 3**, **Google Gemini AI**, **Google Speech Engine**, and **Google Calendar API**. It supports bidirectional voice interactions (Speech-to-Text & Text-to-Speech), automatic keyboard layout correction, proxy/VPN capabilities, event scheduling in Google Calendar, and multi-stage Telegram reminders.
 
 ---
 
-## 🌟 Features
+## 🌟 Key Features
 
-- **🤖 Multimodal AI:** Powered by Google Gemini (`gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-flash-latest`) with automatic model fallbacks.
-- **🎙 Voice Message Processing:** Native Telegram `.ogg` voice notes transcription and processing using Gemini Multimodal API.
+- **🗣 Speech-to-Text (Voice Recognition):** Recognizes and transcribes incoming Telegram `.ogg` voice messages into text.
+- **🔊 Text-to-Speech (Voice Synthesis):** Synthesizes natural Russian voice messages:
+  - Responds automatically with voice notes when spoken to.
+  - Interactive **«🔊 Озвучить ответ»** button under any bot message.
+  - Custom `/voice <text>` command for instantly generating voice notes.
+  - Spoken audio alerts for scheduled reminders!
+- **🤖 Multimodal AI Engine:** Powered by Google Gemini (`gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-flash-latest`) with automatic model fallbacks.
 - **📅 Google Calendar Integration:** Automatic creation of scheduled events in Google Calendar via Google Calendar API.
 - **⏰ Smart Multi-Stage Telegram Reminders:**
   - 🌙 Evening before event (at 22:00)
@@ -26,7 +31,7 @@ An asynchronous Telegram bot built with Python, **Aiogram 3**, **Google Gemini A
 ### 1. Requirements
 - **Python:** `3.10` or higher
 - **Operating System:** Windows, Linux, or macOS
-- **Google Cloud Account:** With Google Calendar API enabled
+- **Google Cloud Account:** With Google Calendar API and Speech Services enabled
 
 ### 2. Clone the Repository
 ```bash
@@ -51,14 +56,12 @@ GOOGLE_CALENDAR_ID=your_email@gmail.com
 PROXY_URL=http://username:password@ip:port
 ```
 
-### 5. Google Calendar API Credentials Setup
-To allow the bot to create events in your Google Calendar:
+### 5. Google Cloud Service Account Setup
 1. Go to [Google Cloud Console](https://console.cloud.google.com/).
-2. Enable **Google Calendar API**.
+2. Enable **Google Calendar API** and **Text-to-Speech API**.
 3. Create a **Service Account** under **IAM & Admin -> Service Accounts**.
-4. Create a **JSON key** for the Service Account and download it.
-5. Rename the downloaded file to `google_keys.json` and place it in the root folder of the project.
-6. Open [Google Calendar](https://calendar.google.com/), go to **Calendar Settings -> Share with specific people**, add your Service Account's email (`client_email` from `google_keys.json`), and grant it **Make changes to events** permission.
+4. Download the **JSON key file**, rename it to `google_keys.json`, and place it in the project root.
+5. Share your Google Calendar with the Service Account email.
 
 ### 6. Run the Bot
 ```bash
@@ -67,32 +70,20 @@ python bot.py
 
 ---
 
-## 🧪 Verification & Testing Scenario
+## 🧪 Voice Verification & Commands
 
 1. Launch the bot (`python bot.py`).
-2. Send a voice or text message to your Telegram bot:
-   > *"Remind me that I have an important meeting tomorrow at 15:00"*
-3. **Expected Behavior:**
-   - The bot responds confirming the scheduled event.
-   - A new event appears in your **Google Calendar**.
-   - Notifications are automatically registered in the local `reminders.db` SQLite database.
-
----
-
-## ❓ Troubleshooting
-
-| Issue | Cause | Solution |
-| :--- | :--- | :--- |
-| `FileNotFoundError: google_keys.json` | Missing Google Service Account key | Create and place `google_keys.json` in root folder. |
-| `TelegramConflictError` | Multiple instances of `bot.py` running | Stop all background Python processes using Task Manager or `taskkill`. |
-| `429 Too Many Requests` | Gemini API quota exceeded | The bot automatically falls back to secondary models (`gemini-2.0-flash-lite`, `gemini-flash-latest`). |
+2. Send a voice message to the bot -> receives both text & voice answer.
+3. Type `/voice Привет, это проверка синтеза речи!` -> receives generated voice note.
+4. Click **«🔊 Озвучить ответ»** under any message to listen to it.
 
 ---
 
 ## 🏷 Release History
 
+- **`v1.4`** — Google Speech-to-Text & Text-to-Speech Voice Engine (Voice-to-Voice support, `/voice` command & TTS button).
 - **`v1.3`** — Google Calendar Integration & Multi-stage Telegram Reminders.
-- **`v1.2`** — Auto Keyboard Layout Correction (e.g. `ghbdtn` ➡️ `привет`).
+- **`v1.2`** — Auto Keyboard Layout Correction (`ghbdtn` ➡️ `привет`).
 - **`v1.1`** — Voice Messages Multimodal Processing.
 - **`v1.0`** — Initial Asynchronous Telegram AI Bot release.
 

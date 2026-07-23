@@ -12,10 +12,12 @@ if sys.platform == "win32":
 
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.client.session.aiohttp import AiohttpSession
+from aiogram.types import FSInputFile, InlineKeyboardMarkup, InlineKeyboardButton
 from google import genai
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from gtts import gTTS
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -46,6 +48,9 @@ MODELS_FALLBACK = [
 TEMP_DIR = Path("temp_audio")
 TEMP_DIR.mkdir(exist_ok=True)
 DB_PATH = Path("reminders.db")
+
+# Хранилище временного текста для кнопок "Озвучить"
+TEXT_CACHE = {}
 
 # Таблица декодирования с английской раскладки QWERTY на русскую ЙЦУКЕН
 ENG_TO_RUS = str.maketrans(
@@ -81,12 +86,18 @@ def init_db():
 
 init_db()
 
+def generate_voice(text: str, filename_prefix: str = "voice") -> Path:
+    """Генерация аудиофайла речи на русском языке через gTTS/Google Speech Engine."""
+    file_path = TEMP_DIR / f"{filename_prefix}_{int(datetime.now().timestamp())}.mp3"
+    tts = gTTS(text=text, lang='ru')
+    tts.save(str(file_path))
+    return file_path
+
 def save_reminder_stages(user_id: int, title: str, event_time: datetime, explicit_remind_time: datetime = None):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     now_dt = datetime.now()
     
-    # Если пользователь явно попросил конкретное время напоминания (например: напомни за 10 минут)
     if explicit_remind_time:
         if explicit_remind_time > now_dt and explicit_remind_time <= event_time:
             cursor.execute("""
@@ -94,7 +105,6 @@ def save_reminder_stages(user_id: int, title: str, event_time: datetime, explici
                 VALUES (?, ?, ?, ?, ?)
             """, (user_id, title, event_time.isoformat(), explicit_remind_time.isoformat(), "custom_time"))
         
-        # Также добавляем сам момент наступления события
         if event_time > now_dt:
             cursor.execute("""
                 INSERT INTO reminders (user_id, title, event_time, remind_time, stage)
@@ -105,17 +115,9 @@ def save_reminder_stages(user_id: int, title: str, event_time: datetime, explici
         conn.close()
         return
 
-    # Динамическая линейка уведомлений:
-    # 1. Вечером накануне (в 22:00 за день до события)
     prev_day_evening = (event_time - timedelta(days=1)).replace(hour=22, minute=0, second=0, microsecond=0)
-    
-    # 2. Утром в день события (в 10:00 утра)
     same_day_morning = event_time.replace(hour=10, minute=0, second=0, microsecond=0)
-    
-    # 3. За 1 час до события
     hour_before = event_time - timedelta(hours=1)
-    
-    # 4. Минута в минуту
     exact_time = event_time
     
     raw_stages = [
@@ -127,7 +129,6 @@ def save_reminder_stages(user_id: int, title: str, event_time: datetime, explici
     
     saved_count = 0
     for stage_name, r_time, label in raw_stages:
-        # Уведомление ставится ТОЛЬКО если его время строго в будущем И строго до наступления события (или совпадает)
         if r_time > now_dt and r_time <= event_time:
             cursor.execute("""
                 INSERT INTO reminders (user_id, title, event_time, remind_time, stage)
@@ -135,7 +136,6 @@ def save_reminder_stages(user_id: int, title: str, event_time: datetime, explici
             """, (user_id, title, event_time.isoformat(), r_time.isoformat(), stage_name))
             saved_count += 1
             
-    # Если событие через 2 минуты, и все предварительные этапы уже в прошлом - ставим строго на момент события
     if saved_count == 0 and event_time > now_dt:
         cursor.execute("""
             INSERT INTO reminders (user_id, title, event_time, remind_time, stage)
@@ -213,7 +213,6 @@ If not an event, return {{"is_event": false}}.
             continue
     return {"is_event": False}
 
-# --- ОТПРАВКА ДИНАМИЧЕСКИХ НАПОМИНАНИЙ ---
 async def check_and_send_reminders():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -241,13 +240,17 @@ async def check_and_send_reminders():
         else:
             msg_prefix = "🔔 **СОБЫТИЕ НАСТУПИЛО ПРЯМО СЕЙЧАС!**"
             
+        text_msg = f"{msg_prefix}\n\n📌 **Событие:** {title}\n⏰ **Время события:** {formatted_event_time}"
+        
         try:
-            await bot.send_message(
-                chat_id=user_id,
-                text=f"{msg_prefix}\n\n"
-                     f"📌 **Событие:** {title}\n"
-                     f"⏰ **Время события:** {formatted_event_time}"
-            )
+            await bot.send_message(chat_id=user_id, text=text_msg)
+            
+            # Озвучиваем напоминание голосом
+            audio_path = generate_voice(f"Напоминание! {title}. Назначено на {formatted_event_time}")
+            await bot.send_voice(chat_id=user_id, voice=FSInputFile(str(audio_path)))
+            if audio_path.exists():
+                audio_path.unlink()
+                
             cursor.execute("UPDATE reminders SET is_sent = 1 WHERE id = ?", (rem_id,))
             conn.commit()
         except Exception as e:
@@ -258,17 +261,57 @@ async def check_and_send_reminders():
 @dp.message(CommandStart())
 async def start_cmd(message: types.Message):
     await message.answer(
-        "👋 **Привет! Я твой личный AI-планировщик Antigravity.**\n\n"
-        "Я умею гибко выстраивать напоминания под текущее время:\n"
-        "• 🌙 Накануне вечером в 22:00\n"
-        "• ☀️ Утром в день события в 10:00\n"
-        "• ⏳ За 1 час до события\n"
-        "• 🔔 Минута в минуту!\n\n"
-        "*(Если до события осталось пару минут — пришлю только минута в минуту!)*"
+        "👋 **Привет! Я твой AI-ассистент с полноценной озвучкой речи (Text-to-Speech & Speech-to-Text).**\n\n"
+        "🗣 **Как пользоваться:**\n"
+        "• Отправь **голосовое сообщение**, и я отвечу тебе голосом!\n"
+        "• Напиши текст и нажми кнопку **«🔊 Озвучить»** под моим ответом.\n"
+        "• Воспользуйся командой `/voice ваш текст` для мгновенной генерации голосового.\n"
+        "• Задавай любые события в Календарь и получай звуковые напоминания!"
     )
+
+@dp.message(Command("voice"))
+async def voice_command_handler(message: types.Message):
+    """Команда /voice <текст> для озвучки свободного текста."""
+    command_args = message.text.removeprefix("/voice").strip()
+    if not command_args:
+        await message.answer("ℹ️ Пожалуйста, укажите текст после команды `/voice`, например:\n`/voice Привет, это проверка речи!`")
+        return
+        
+    await bot.send_chat_action(chat_id=message.chat.id, action="record_voice")
+    try:
+        audio_path = generate_voice(command_args, filename_prefix="cmd_voice")
+        await message.answer_voice(voice=FSInputFile(str(audio_path)))
+        if audio_path.exists():
+            audio_path.unlink()
+    except Exception as e:
+        logging.error(f"Ошибка при выполнении /voice: {e}")
+        await message.answer(f"⚠️ Ошибка при генерации речи: {e}")
+
+@dp.callback_query(F.data.startswith("tts_"))
+async def handle_tts_callback(callback: types.CallbackQuery):
+    """Обработчик кнопки '🔊 Озвучить' под сообщением бота."""
+    cache_id = callback.data.removeprefix("tts_")
+    text_to_speak = TEXT_CACHE.get(cache_id)
+    
+    if not text_to_speak:
+        await callback.answer("⚠️ Текст для озвучки устарел или не найден.", show_alert=True)
+        return
+        
+    await callback.answer("🔊 Генерирую голосовое сообщение...")
+    await bot.send_chat_action(chat_id=callback.message.chat.id, action="record_voice")
+    
+    try:
+        audio_path = generate_voice(text_to_speak, filename_prefix="btn_voice")
+        await callback.message.reply_voice(voice=FSInputFile(str(audio_path)))
+        if audio_path.exists():
+            audio_path.unlink()
+    except Exception as e:
+        logging.error(f"Ошибка озвучки по кнопке: {e}")
+        await callback.message.answer(f"⚠️ Ошибка генерации речи: {e}")
 
 @dp.message(F.voice)
 async def handle_voice_message(message: types.Message):
+    """Прием голосового сообщения (Speech-to-Text) и ответ Голосом."""
     await bot.send_chat_action(chat_id=message.chat.id, action="typing")
     file_id = message.voice.file_id
     file_path = TEMP_DIR / f"{file_id}.ogg"
@@ -294,12 +337,14 @@ async def handle_voice_message(message: types.Message):
             file_path.unlink()
 
         if transcription_res and transcription_res.text:
-            await process_event_or_chat(message, transcription_res.text)
+            text_prompt = transcription_res.text
+            # Отвечаем на голосовое текстовым отчетом И голосовым ответом (Voice-to-Voice)
+            await process_event_or_chat(message, text_prompt, reply_with_voice=True)
         else:
             await message.answer("⚠️ Не удалось распознать голосовое сообщение.")
 
     except Exception as e:
-        logging.error(f"Ошибка голосового сообщения: {e}")
+        logging.error(f"Ошибка Speech-to-Text: {e}")
         if file_path.exists():
             file_path.unlink()
         await message.answer(f"⚠️ Ошибка при обработке аудио: {e}")
@@ -308,9 +353,9 @@ async def handle_voice_message(message: types.Message):
 async def handle_text_message(message: types.Message):
     await bot.send_chat_action(chat_id=message.chat.id, action="typing")
     corrected_text = fix_keyboard_layout(message.text)
-    await process_event_or_chat(message, corrected_text)
+    await process_event_or_chat(message, corrected_text, reply_with_voice=False)
 
-async def process_event_or_chat(message: types.Message, raw_text: str):
+async def process_event_or_chat(message: types.Message, raw_text: str, reply_with_voice: bool = False):
     extracted = extract_event_details(raw_text)
     
     if extracted.get("is_event"):
@@ -323,26 +368,32 @@ async def process_event_or_chat(message: types.Message, raw_text: str):
             explicit_remind_dt = datetime.fromisoformat(explicit_remind_str) if explicit_remind_str else None
             end_dt = event_dt + timedelta(hours=1)
             
-            # Сохраняем умную линейку уведомлений
             save_reminder_stages(message.chat.id, title, event_dt, explicit_remind_dt)
-            
-            # Заносим в Google Календарь
             cal_success, cal_link_or_err = add_google_calendar_event(title, event_dt, end_dt)
             cal_info = f"\n📅 **Добавлено в Google Календарь!** [Ссылка]({cal_link_or_err})" if cal_success else ""
             
-            await message.answer(
+            reply_text = (
                 f"✅ **Принято! Запланировано событие:**\n\n"
                 f"📌 **Название:** {title}\n"
                 f"⏰ **Время события:** {event_dt.strftime('%d.%m.%Y в %H:%M')}{cal_info}\n\n"
-                f"🔔 *Напоминание сработает вовремя!*",
-                parse_mode="Markdown"
+                f"🔔 *Напоминания придут вовремя!*"
             )
+            
+            msg = await message.answer(reply_text, parse_mode="Markdown")
+            
+            # Если пользователь обращался голосом — отвечаем голосом!
+            if reply_with_voice:
+                audio_path = generate_voice(f"Принято! Запланировано событие: {title} на {event_dt.strftime('%d.%m в %H:%M')}")
+                await message.reply_voice(voice=FSInputFile(str(audio_path)))
+                if audio_path.exists():
+                    audio_path.unlink()
             return
         except Exception as e:
             logging.error(f"Ошибка обработки даты: {e}")
     
     system_prompt = (
-        "Ты — вежливый AI-помощник Antigravity. Ты умеешь устанавливать любые напоминания в Telegram и Google Календарь. "
+        "Ты — вежливый AI-помощник Antigravity. Ты умеешь общаться текстом и голосом, "
+        "а также устанавливать любые напоминания в Telegram и Google Календарь. "
         "Пользователь может писать в неверной раскладке (ghbdtn = привет). Всегда давай полезный ответ на русском языке!"
     )
     for model_name in MODELS_FALLBACK:
@@ -352,7 +403,24 @@ async def process_event_or_chat(message: types.Message, raw_text: str):
                 contents=f"{system_prompt}\n\nПользователь пишет: {raw_text}"
             )
             if response and response.text:
-                await message.answer(response.text)
+                resp_text = response.text
+                cache_id = str(hash(resp_text))
+                TEXT_CACHE[cache_id] = resp_text
+                
+                # Кнопка под сообщением для озвучивания ответа
+                keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="🔊 Озвучить ответ", callback_data=f"tts_{cache_id}")]
+                ])
+                
+                await message.answer(resp_text, reply_markup=keyboard)
+                
+                # Если запрос пришел голосом, отправляем ответ и голосом в чат
+                if reply_with_voice:
+                    clean_speech_text = resp_text.replace("*", "").replace("#", "")[:300]
+                    audio_path = generate_voice(clean_speech_text)
+                    await message.reply_voice(voice=FSInputFile(str(audio_path)))
+                    if audio_path.exists():
+                        audio_path.unlink()
                 return
         except Exception as e:
             continue
@@ -370,7 +438,7 @@ async def main():
     scheduler.add_job(check_and_send_reminders, 'interval', seconds=3)
     scheduler.start()
 
-    print("🚀 Бот Antigravity (Интеллектуальные напоминания с учетом текущего времени) запущен!")
+    print("🚀 Бот Antigravity (Google Speech-to-Text & Text-to-Speech Озвучка) запущен!")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
