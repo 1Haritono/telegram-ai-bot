@@ -27,16 +27,22 @@ An asynchronous Telegram bot built with Python, **Aiogram 3**, **Google Gemini A
 
 A standalone diagnostic tool is included to check all 3 professional TTS services (ElevenLabs, Azure Speech, Google Neural2) **without starting the Telegram bot**.
 
-### Terminal Execution:
+### Terminal Execution
+
 ```bash
 python scripts/check_tts.py
 ```
 
-### Script Workflow:
+### Script Workflow
+
 1. Verifies API key presence in `.env` and `google_keys.json`.
+
 2. Queries each provider's API to check character balance/quota remaining.
+
 3. Generates a test audio sample for *"Sample Voice Test"*.
+
 4. Displays a summary status table with step-by-step troubleshooting instructions upon error detection.
+
 5. Returns exit code `sys.exit(0)` on success or `sys.exit(1)` if any provider fails.
 
 ---
@@ -75,10 +81,12 @@ python scripts/check_tts.py
 ## 🛠 Detailed Setup & Installation
 
 ### 1. Requirements
+
 - **Python:** `3.10` or higher
 - **Operating System:** Windows, Linux, or macOS
 
 ### 2. Clone & Install Dependencies
+
 ```bash
 git clone https://github.com/1Haritono/telegram-ai-bot.git
 cd telegram-ai-bot
@@ -86,6 +94,7 @@ pip install -r requirements.txt
 ```
 
 ### 3. Environment Configuration (`.env`)
+
 ```env
 BOT_TOKEN=your_telegram_bot_token_from_botfather
 GEMINI_API_KEY=your_gemini_api_key_from_google_ai_studio
@@ -98,11 +107,13 @@ AZURE_SPEECH_REGION=westeurope
 ```
 
 ### 4. Run Diagnostic Tool
+
 ```bash
 python scripts/check_tts.py
 ```
 
 ### 5. Run the Bot
+
 ```bash
 python bot.py
 ```
