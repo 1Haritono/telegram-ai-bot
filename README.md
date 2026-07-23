@@ -1,75 +1,102 @@
-# Telegram AI Assistant Bot (Aiogram 3 + Gemini API)
+# Telegram AI Assistant Bot (Aiogram 3 + Gemini API + Google Calendar)
 
-An asynchronous Telegram bot built with Python, **Aiogram 3**, and **Google Gemini AI** supporting text, voice messages, automatic keyboard layout correction, and proxy/VPN capabilities.
-
-## 🚀 Key Features
-
-- **Asynchronous Architecture:** Built on top of `Aiogram 3` for fast, non-blocking operation.
-- **Multimodal AI Integration:** Leverages Google Gemini models for deep text understanding and natural language processing.
-- **Voice Message Support:** Transcribes, understands, and replies to Telegram voice messages (`.ogg` audio files).
-- **Auto Keyboard Layout Correction:** Automatically detects and decodes mistyped text in English keyboard layout (e.g., `ghbdtn` ➡️ `привет`).
-- **Smart Model Fallback:** Automatically switches between lightweight models (`gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-flash-latest`) when rate limits or quotas are hit.
-- **Security First:** Confidential credentials (tokens & proxy auth) are isolated in `.env` and kept out of version control.
-- **Proxy & VPN Ready:** Supports HTTP/SOCKS5 proxies with authentication as well as system-wide VPN setups.
-- **Windows UTF-8 Optimized:** Properly reconfigured stdout encoding and logging for Windows environments.
+An asynchronous Telegram bot built with Python, **Aiogram 3**, **Google Gemini AI**, and **Google Calendar API**. It supports text, voice messages, automatic keyboard layout correction, proxy/VPN capabilities, event scheduling in Google Calendar, and multi-stage Telegram reminders.
 
 ---
 
-## 🛠 Installation & Setup
+## 🌟 Features
 
-### 1. Clone the Repository
+- **🤖 Multimodal AI:** Powered by Google Gemini (`gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-flash-latest`) with automatic model fallbacks.
+- **🎙 Voice Message Processing:** Native Telegram `.ogg` voice notes transcription and processing using Gemini Multimodal API.
+- **📅 Google Calendar Integration:** Automatic creation of scheduled events in Google Calendar via Google Calendar API.
+- **⏰ Smart Multi-Stage Telegram Reminders:**
+  - 🌙 Evening before event (at 22:00)
+  - ☀️ Morning of event (at 10:00)
+  - ⏳ 1 hour before event
+  - 🔔 Exact minute of the event
+  - *Dynamic adaptive time calculation (filters out past stages automatically).*
+- **🔤 Auto Keyboard Layout Correction:** Decodes mistyped English layout into Cyrillic (e.g. `ghbdtn` ➡️ `привет`).
+- **🛡 Security First:** Complete isolation of tokens and service keys in `.env` and `google_keys.json` (git-ignored).
+- **📡 Proxy & VPN Ready:** Supports HTTP/SOCKS5 proxy authentication or native system-wide VPN setups.
+
+---
+
+## 🛠 Detailed Setup & Installation
+
+### 1. Requirements
+- **Python:** `3.10` or higher
+- **Operating System:** Windows, Linux, or macOS
+- **Google Cloud Account:** With Google Calendar API enabled
+
+### 2. Clone the Repository
 ```bash
 git clone https://github.com/1Haritono/telegram-ai-bot.git
 cd telegram-ai-bot
 ```
 
-### 2. Install Dependencies
+### 3. Install Dependencies
 ```bash
-pip install aiogram google-genai python-dotenv aiohttp-socks
+pip install -r requirements.txt
 ```
 
-### 3. Configure Environment Variables
-Create a `.env` file in the root directory of the project:
+### 4. Environment Configuration (`.env`)
+Create a `.env` file in the root directory:
 
 ```env
 BOT_TOKEN=your_telegram_bot_token_from_botfather
 GEMINI_API_KEY=your_gemini_api_key_from_google_ai_studio
+GOOGLE_CALENDAR_ID=your_email@gmail.com
 
-# Optional: If you use a proxy server (HTTP/SOCKS5)
-# Format with authentication: http://username:password@ip:port
-# Format without authentication: http://ip:port
-PROXY_URL=http://user:password@ip:port
+# Optional Proxy Configuration
+PROXY_URL=http://username:password@ip:port
 ```
 
-> ⚠️ **Note:** If you are running a **system-wide VPN** on your machine or server, leaving `PROXY_URL` blank will allow the bot to seamlessly use your active VPN connection.
+### 5. Google Calendar API Credentials Setup
+To allow the bot to create events in your Google Calendar:
+1. Go to [Google Cloud Console](https://console.cloud.google.com/).
+2. Enable **Google Calendar API**.
+3. Create a **Service Account** under **IAM & Admin -> Service Accounts**.
+4. Create a **JSON key** for the Service Account and download it.
+5. Rename the downloaded file to `google_keys.json` and place it in the root folder of the project.
+6. Open [Google Calendar](https://calendar.google.com/), go to **Calendar Settings -> Share with specific people**, add your Service Account's email (`client_email` from `google_keys.json`), and grant it **Make changes to events** permission.
 
-### 4. Run the Bot
+### 6. Run the Bot
 ```bash
 python bot.py
 ```
 
 ---
 
-## 🏷 Release History & Detailed Release Notes
+## 🧪 Verification & Testing Scenario
 
-### 🔹 **`v1.2` — Auto Keyboard Layout Correction (Latest)**
-- Added `fix_keyboard_layout()` function that detects mistyped English keyboard characters (e.g., `ghbdtn`, `rfr ltkf`) and decodes them to Cyrillic (`привет`, `как дела`).
-- Instructed Gemini prompt to process converted layout seamlessly.
-- Ignores valid English words while converting obvious layout mistakes.
+1. Launch the bot (`python bot.py`).
+2. Send a voice or text message to your Telegram bot:
+   > *"Remind me that I have an important meeting tomorrow at 15:00"*
+3. **Expected Behavior:**
+   - The bot responds confirming the scheduled event.
+   - A new event appears in your **Google Calendar**.
+   - Notifications are automatically registered in the local `reminders.db` SQLite database.
 
-### 🔹 **`v1.1` — Voice Messages Support**
-- Added handler for `F.voice` Telegram audio messages.
-- Integrated `ai_client.files.upload()` to stream `.ogg` audio directly to Google Gemini Multimodal API.
-- Implemented temporary audio file cleanup after processing.
+---
 
-### 🔹 **`v1.0` — Initial Release**
-- Core asynchronous Telegram bot based on `Aiogram 3`.
-- Integration with Google Gemini API (`gemini-2.0-flash`).
-- Safe `.env` key management.
-- HTTP/SOCKS5 proxy authentication support.
-- Windows UTF-8 stdout fix.
+## ❓ Troubleshooting
+
+| Issue | Cause | Solution |
+| :--- | :--- | :--- |
+| `FileNotFoundError: google_keys.json` | Missing Google Service Account key | Create and place `google_keys.json` in root folder. |
+| `TelegramConflictError` | Multiple instances of `bot.py` running | Stop all background Python processes using Task Manager or `taskkill`. |
+| `429 Too Many Requests` | Gemini API quota exceeded | The bot automatically falls back to secondary models (`gemini-2.0-flash-lite`, `gemini-flash-latest`). |
+
+---
+
+## 🏷 Release History
+
+- **`v1.3`** — Google Calendar Integration & Multi-stage Telegram Reminders.
+- **`v1.2`** — Auto Keyboard Layout Correction (e.g. `ghbdtn` ➡️ `привет`).
+- **`v1.1`** — Voice Messages Multimodal Processing.
+- **`v1.0`** — Initial Asynchronous Telegram AI Bot release.
 
 ---
 
 ## 📜 License
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License. See `LICENSE` for details.
