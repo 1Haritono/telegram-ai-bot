@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Т-Банк • Обучение Мэтчингу и Модерации</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="decorations">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+    </div>
+
+    <header class="app-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="logo-icon">T</div>
+                <div class="logo-text">
+                    <h1>Т-Банк</h1>
+                    <span>Мэтчинг и Модерация</span>
+                </div>
+            </div>
+            <nav class="nav-tabs">
+                <button class="tab-btn active" data-tab="simulator">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M20 5H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2zM12 17v-5"/></svg>
+                    Симулятор
+                </button>
+                <button class="tab-btn" data-tab="rulebook">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20M4 19.5V5A2.5 2.5 0 016.5 2.5H20v14H6.5a2.5 2.5 0 00-2.5 2.5z"/></svg>
+                    Инструкции
+                </button>
+                <button class="tab-btn" data-tab="generator">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+                    Генератор шаблона
+                </button>
+                <button class="tab-btn" data-tab="quiz">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+                    Тест-Экзамен
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <!-- SIMULATOR TAB -->
+        <section id="simulator" class="tab-content active">
+            <div class="tab-header">
+                <h2>Интерактивный тренажер мэтчинга</h2>
+                <p>Практикуйте реальные сценарии разметки товаров и модерации изображений по правилам Т-Банка.</p>
+            </div>
+            
+            <div class="simulator-layout">
+                <div class="simulator-main-card glass-panel">
+                    <div class="sim-card-header">
+                        <span class="category-badge" id="sim-category">Категория</span>
+                        <div class="sim-controls">
+                            <button id="prev-sim-btn" class="icon-btn" title="Предыдущий кейс">←</button>
+                            <span class="sim-progress" id="sim-progress">Кейс 1 из 10</span>
+                            <button id="next-sim-btn" class="icon-btn" title="Следующий кейс">→</button>
+                        </div>
+                    </div>
+
+                    <div class="comparison-area" id="comparison-container">
+                        <!-- Dynamic comparison cards will be inserted here by JS -->
+                    </div>
+
+                    <div class="user-decision-panel">
+                        <h3>Ваше решение:</h3>
+                        <div class="status-selector-grid">
+                            <button class="status-option-btn" data-status="1">
+                                <span class="status-num">1</span>
+                                <span class="status-name">Полностью идентичные</span>
+                                <span class="status-desc">Слияние в одну карточку. Совпадает всё до мелочей.</span>
+                            </button>
+                            <button class="status-option-btn" data-status="2">
+                                <span class="status-num">2</span>
+                                <span class="status-name">Разные варианты</span>
+                                <span class="status-desc">Разный цвет, объем, память или размер одной модели.</span>
+                            </button>
+                            <button class="status-option-btn" data-status="3">
+                                <span class="status-num">3</span>
+                                <span class="status-name">Полностью отличаются</span>
+                                <span class="status-desc">Разные бренды, линейки (Pro/Max), типы товаров или Б/У.</span>
+                            </button>
+                            <button class="status-option-btn" data-status="4">
+                                <span class="status-num">4</span>
+                                <span class="status-name">Не хватает информации</span>
+                                <span class="status-desc">Противоречивые спецификации или отсутствие важных данных.</span>
+                            </button>
+                        </div>
+
+                        <div class="image-moderation-selector-grid hidden" id="image-moderation-selector">
+                            <!-- CV violation flags (21 categories checklist) -->
+                            <div class="violations-title">Выберите обнаруженные нарушения на изображении (если есть):</div>
+                            <div class="violations-checkboxes">
+                                <!-- Generated dynamically by JS -->
+                            </div>
+                        </div>
+
+                        <div class="decision-actions">
+                            <button id="check-decision-btn" class="primary-btn">Проверить решение</button>
+                            <button id="show-hint-btn" class="secondary-btn">Показать подсказку</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="simulator-sidebar">
+                    <div class="sidebar-block glass-panel explanation-card hidden" id="feedback-panel">
+                        <div class="explanation-status" id="feedback-status-title">
+                            <span class="icon">✓</span>
+                            <h4>Правильно!</h4>
+                        </div>
+                        <div class="explanation-body" id="feedback-text">
+                            <!-- Explanation text -->
+                        </div>
+                        <div class="explanation-template">
+                            <h5>Шаблон ответа для отчета:</h5>
+                            <pre><code id="feedback-template-code"></code></pre>
+                            <button class="copy-btn mini-btn" id="copy-feedback-template">Копировать</button>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-block glass-panel info-card">
+                        <h4>Быстрый справочник</h4>
+                        <ul class="quick-tips-list" id="quick-tips-list">
+                            <li><strong>Аксиома:</strong> Полностью идентичные товары — если клиент получит абсолютно одинаковый товар у разных продавцов.</li>
+                            <li><strong>Смартфоны:</strong> Модификации Pro/Max/Plus — НЕЛЬЗЯ склеивать. Объем памяти и цвет — это варианты. Region/EAC игнорируем.</li>
+                            <li><strong>Косметика:</strong> Объем/вес и оттенки — варианты. Тип кожи, день/ночь, шампунь/кондиционер — разные товары.</li>
+                            <li><strong>Бытовая техника:</strong> Вендоркод — главный ориентир. Отличается только последняя цифра/буква? Это варианты.</li>
+                            <li><strong>Комнаты:</strong> Тип комнаты (Standard, Studio, Apartment, Suite) должен совпадать. Качество "Superior" ниже "Deluxe". Balcony в офере подходит под любой запрос, но если в запросе нужен балкон — в офере он обязан быть.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RULEBOOK TAB -->
+        <section id="rulebook" class="tab-content">
+            <div class="tab-header">
+                <h2>Интерактивный справочник правил Т-Банка</h2>
+                <p>Все правила категоризации, мэтчинга и модерации в удобном структурированном виде.</p>
+            </div>
+
+            <div class="rulebook-layout">
+                <aside class="rulebook-nav glass-panel">
+                    <button class="rule-nav-btn active" data-rule="electronics">📱 Смартфоны и Электроника</button>
+                    <button class="rule-nav-btn" data-rule="beauty">🧴 Косметика и Уход</button>
+                    <button class="rule-nav-btn" data-rule="appliances">🔌 Бытовая техника и Вендоркоды</button>
+                    <button class="rule-nav-btn" data-rule="rooms">🏨 Отели и комнаты (Т-Путешествия)</button>
+                    <button class="rule-nav-btn" data-rule="moderation">🖼️ Модерация Изображений (CV)</button>
+                </aside>
+
+                <div class="rulebook-body glass-panel" id="rulebook-content-area">
+                    <!-- Rulebook detail views injected here by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- GENERATOR TAB -->
+        <section id="generator" class="tab-content">
+            <div class="tab-header">
+                <h2>Генератор официальных шаблонов ответов</h2>
+                <p>Заполните форму ниже для автоматической генерации строгого отчета по правилам разметки.</p>
+            </div>
+
+            <div class="generator-layout">
+                <div class="generator-form glass-panel">
+                    <div class="form-row">
+                        <label for="gen-category">Категория разметки:</label>
+                        <select id="gen-category">
+                            <option value="electronics">Электроника (Смартфоны)</option>
+                            <option value="beauty">Косметика (Красота и уход)</option>
+                            <option value="appliances">Бытовая техника</option>
+                            <option value="other">Другое</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="gen-model">Модель и Бренд:</label>
+                        <input type="text" id="gen-model" placeholder="Например: Apple iPhone 15 Pro (идентичны)">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="gen-color">Цвет / Оттенок:</label>
+                        <input type="text" id="gen-color" placeholder="Например: Черный космос / Space Black (синонимы)">
+                    </div>
+
+                    <div class="form-row grid-2">
+                        <div>
+                            <label for="gen-ram">Оперативная память (RAM):</label>
+                            <input type="text" id="gen-ram" placeholder="Например: 8 ГБ (или Не применимо)">
+                        </div>
+                        <div>
+                            <label for="gen-rom">Встроенная память (ROM):</label>
+                            <input type="text" id="gen-rom" placeholder="Например: 256 ГБ (или Не применимо)">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="gen-state">Состояние товара:</label>
+                        <select id="gen-state">
+                            <option value="new">Новые (Оба товара новые, т.к. не указано иное)</option>
+                            <option value="used">Б/У / Уценка (Товары отличаются по состоянию)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="gen-specs">Тип, объем или комплектация:</label>
+                        <input type="text" id="gen-specs" placeholder="Например: 2 physical Nano-SIM / 50 мл / С ворсом">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="gen-status">Официальный статус (ВЫВОД):</label>
+                        <select id="gen-status">
+                            <option value="Полностью идентичные товары">Полностью идентичные товары</option>
+                            <option value="Различные варианты одной и той же модели одного бренда">Различные варианты одной и той же модели одного бренда</option>
+                            <option value="Полностью отличаются">Полностью отличаются</option>
+                            <option value="Не хватает информации">Не хватает информации</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="gen-justification">Обоснование решения:</label>
+                        <textarea id="gen-justification" rows="4" placeholder="Опишите детальную логику склейки или разделения со ссылкой на правила..."></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="gen-action">Итоговое техническое действие:</label>
+                        <input type="text" id="gen-action" value="Можно объединить в одну товарную карточку">
+                    </div>
+                </div>
+
+                <div class="generator-preview glass-panel">
+                    <div class="preview-header">
+                        <h3>Сгенерированный шаблон (Markdown)</h3>
+                        <button id="copy-generated-btn" class="primary-btn mini-btn">Копировать в буфер</button>
+                    </div>
+                    <div class="preview-output">
+                        <pre><code id="generated-markdown-code">Правильный ответ:
+
+Из названий товаров понятно, что:
+...</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- QUIZ TAB -->
+        <section id="quiz" class="tab-content">
+            <div class="tab-header">
+                <h2>Экзаменационный тест на квалификацию</h2>
+                <p>Проверьте свои знания правил разметки. Вам предстоит ответить на 10 сложных вопросов. Для прохождения нужно набрать от 80% правильных ответов.</p>
+            </div>
+
+            <div class="quiz-container glass-panel" id="quiz-wrapper">
+                <!-- Quiz start screen -->
+                <div id="quiz-start-screen" class="quiz-screen active">
+                    <div class="quiz-badge-icon">🏆</div>
+                    <h3>Начать квалификационный тест</h3>
+                    <p>Вопросы содержат ловушки: перенаправления по ссылкам, региональные версии, схожие вендоркоды бытовой техники и классификацию CV нарушений.</p>
+                    <button id="start-quiz-btn" class="primary-btn large-btn">Начать тестирование</button>
+                </div>
+
+                <!-- Quiz question screen -->
+                <div id="quiz-question-screen" class="quiz-screen">
+                    <div class="quiz-header-status">
+                        <span class="question-number" id="quiz-question-num">Вопрос 1 из 10</span>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="quiz-progress-bar" style="width: 10%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="quiz-question-card">
+                        <h4 id="quiz-question-text">Текст вопроса</h4>
+                        <div class="quiz-context-box" id="quiz-question-context">
+                            <!-- Scenario description -->
+                        </div>
+                        <div class="quiz-options-list" id="quiz-options-container">
+                            <!-- Dynamic radio button options -->
+                        </div>
+                    </div>
+
+                    <div class="quiz-actions">
+                        <button id="quiz-submit-btn" class="primary-btn">Ответить</button>
+                    </div>
+                </div>
+
+                <!-- Quiz result screen -->
+                <div id="quiz-result-screen" class="quiz-screen">
+                    <div class="result-score-circle">
+                        <span id="quiz-result-score">8/10</span>
+                        <span class="subtext">правильных ответов</span>
+                    </div>
+                    <h3 id="quiz-result-title">Тест сдан!</h3>
+                    <p id="quiz-result-desc">Поздравляем! Вы отлично ориентируетесь в правилах мэтчинга товаров Т-Банка.</p>
+                    
+                    <div class="result-breakdown" id="quiz-result-breakdown">
+                        <!-- Breakdown of answers -->
+                    </div>
+
+                    <button id="restart-quiz-btn" class="secondary-btn">Пройти заново</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <div class="footer-container">
+            <p>© 2026 Т-Банк Tagging & Moderation Training Simulator. Все права защищены.</p>
+            <p class="footer-note">Разработано в учебных целях для асессоров разметки данных.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
