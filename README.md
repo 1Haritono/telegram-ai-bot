@@ -1,43 +1,62 @@
 # Telegram AI Assistant Bot (Aiogram 3 + Gemini API)
 
-Асинхронный Telegram-бот на Python с интегрированным искусственным интеллектом Google Gemini AI и авто-переключением резервных моделей при исчерпании лимитов (Fallback).
+An asynchronous Telegram bot built with Python, **Aiogram 3**, and **Google Gemini AI** supporting text, voice messages, automatic keyboard layout correction, and proxy/VPN capabilities.
 
-## 🚀 Особенности
-- **Фреймворк:** Aiogram 3 (асинхронная работа).
-- **ИИ Модели:** Авто-переключение между доступными моделями Gemini (`gemini-flash-lite-latest`, `gemma-4`, `gemini-flash-latest`) при превышении квот.
-- **Безопасность:** Конфигурация через `.env` (все токены, ключи и приватные данные скрыты от системы контроля версий).
-- **Поддержка VPN / Прокси:** Полноценная поддержка работы через системный VPN или прокси-сервер с авторизацией (логин и пароль).
-- **Поддержка Windows:** Настроена корректная кодировка UTF-8 и логирование.
+## 🚀 Key Features
 
-## 🛠 Установка и запуск
+- **Asynchronous Architecture:** Built on top of `Aiogram 3` for fast, non-blocking operation.
+- **Multimodal AI Integration:** Leverages Google Gemini models for deep text understanding and natural language processing.
+- **Voice Message Support:** Transcribes, understands, and replies to Telegram voice messages (`.ogg` audio files).
+- **Auto Keyboard Layout Correction:** Automatically detects and decodes mistyped text in English keyboard layout (e.g., `ghbdtn` ➡️ `привет`).
+- **Smart Model Fallback:** Automatically switches between lightweight models (`gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-flash-latest`) when rate limits or quotas are hit.
+- **Security First:** Confidential credentials (tokens & proxy auth) are isolated in `.env` and kept out of version control.
+- **Proxy & VPN Ready:** Supports HTTP/SOCKS5 proxies with authentication as well as system-wide VPN setups.
+- **Windows UTF-8 Optimized:** Properly reconfigured stdout encoding and logging for Windows environments.
 
-1. **Клонируйте репозиторий:**
+---
+
+## 🛠 Installation & Setup
+
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/1Haritono/telegram-ai-bot.git
 cd telegram-ai-bot
 ```
 
-2. **Установите зависимости:**
+### 2. Install Dependencies
 ```bash
 pip install aiogram google-genai python-dotenv aiohttp-socks
 ```
 
-3. **Создайте файл `.env`:**
-Создайте файл с именем `.env` в корневой папке проекта и заполните его своими данными:
+### 3. Configure Environment Variables
+Create a `.env` file in the root directory of the project:
 
 ```env
-BOT_TOKEN=ваш_токен_от_BotFather
-GEMINI_API_KEY=ваш_ключ_от_Google_AI_Studio
+BOT_TOKEN=your_telegram_bot_token_from_botfather
+GEMINI_API_KEY=your_gemini_api_key_from_google_ai_studio
 
-# Опционально: если вы используете прокси / VPN на уровне соединения
-# Формат с логином и паролем: http://логин:пароль@ip:порт
-# Формат без авторизации: http://ip:порт
+# Optional: If you use a proxy server (HTTP/SOCKS5)
+# Format with authentication: http://username:password@ip:port
+# Format without authentication: http://ip:port
 PROXY_URL=http://user:password@ip:port
 ```
 
-> ⚠️ **Обратите внимание:** Если вы используете **системный VPN** на ПК или сервере, указывать `PROXY_URL` в файле `.env` не требуется — бот автоматически будет работать через ваше VPN-соединение.
+> ⚠️ **Note:** If you are running a **system-wide VPN** on your machine or server, leaving `PROXY_URL` blank will allow the bot to seamlessly use your active VPN connection.
 
-4. **Запустите бота:**
+### 4. Run the Bot
 ```bash
 python bot.py
 ```
+
+---
+
+## 🏷 Release History & Tags
+
+- **`v1.0`** — Initial release: Asynchronous Telegram AI bot with text support.
+- **`v1.1`** — Added voice message processing via Gemini Multimodal API.
+- **`v1.2`** — Integrated automatic English-to-Cyrillic keyboard layout converter.
+
+---
+
+## 📜 License
+Distributed under the MIT License. See `LICENSE` for more information.
