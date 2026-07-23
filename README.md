@@ -50,11 +50,24 @@ python bot.py
 
 ---
 
-## 🏷 Release History & Tags
+## 🏷 Release History & Detailed Release Notes
 
-- **`v1.0`** — Initial release: Asynchronous Telegram AI bot with text support.
-- **`v1.1`** — Added voice message processing via Gemini Multimodal API.
-- **`v1.2`** — Integrated automatic English-to-Cyrillic keyboard layout converter.
+### 🔹 **`v1.2` — Auto Keyboard Layout Correction (Latest)**
+- Added `fix_keyboard_layout()` function that detects mistyped English keyboard characters (e.g., `ghbdtn`, `rfr ltkf`) and decodes them to Cyrillic (`привет`, `как дела`).
+- Instructed Gemini prompt to process converted layout seamlessly.
+- Ignores valid English words while converting obvious layout mistakes.
+
+### 🔹 **`v1.1` — Voice Messages Support**
+- Added handler for `F.voice` Telegram audio messages.
+- Integrated `ai_client.files.upload()` to stream `.ogg` audio directly to Google Gemini Multimodal API.
+- Implemented temporary audio file cleanup after processing.
+
+### 🔹 **`v1.0` — Initial Release**
+- Core asynchronous Telegram bot based on `Aiogram 3`.
+- Integration with Google Gemini API (`gemini-2.0-flash`).
+- Safe `.env` key management.
+- HTTP/SOCKS5 proxy authentication support.
+- Windows UTF-8 stdout fix.
 
 ---
 
