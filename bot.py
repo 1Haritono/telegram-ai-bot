@@ -49,6 +49,7 @@ GOOGLE_CALENDAR_ID = os.getenv("GOOGLE_CALENDAR_ID", "primary")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 AZURE_SPEECH_KEY = os.getenv("AZURE_SPEECH_KEY")
 AZURE_SPEECH_REGION = os.getenv("AZURE_SPEECH_REGION", "westeurope")
+N8N_WEBHOOK_URL = os.getenv("N8N_WEBHOOK_URL")
 
 if not BOT_TOKEN or not GEMINI_API_KEY:
     raise ValueError("Необходимо заполнить BOT_TOKEN и GEMINI_API_KEY в файле .env!")
@@ -485,6 +486,21 @@ If not an event, return {{"is_event": false}}.
             continue
     return {"is_event": False}
 
+def send_to_n8n_webhook(payload: dict) -> dict:
+    """
+    Отправка данных события/задачи в n8n Workflow Webhook (Test & Production)
+    """
+    webhooks = [
+        "http://localhost:5678/webhook-test/telegram-ai-bot",
+        "http://localhost:5678/webhook/telegram-ai-bot"
+    ]
+    for url in webhooks:
+        try:
+            requests.post(url, json=payload, timeout=2)
+        except Exception:
+            pass
+    return {"status": "sent"}
+
 async def check_and_send_reminders():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -661,9 +677,8 @@ async def global_callback_router(callback: types.CallbackQuery):
             provider = get_user_voice_provider(user_id)
             mode_lbl = "Голос" if new_mode == "voice" else "Текст"
             
-            await callback.answer()
+            await callback.answer(f"Формат ответов: {mode_lbl}")
             await callback.message.edit_reply_markup(reply_markup=get_voice_menu_keyboard(new_mode, provider))
-            await callback.message.answer(f"⚙️ **Формат ответов изменён на: {mode_lbl}**", parse_mode="Markdown")
 
         elif data == CB_PROV_MENU:
             provider = get_user_voice_provider(user_id)
@@ -823,6 +838,15 @@ async def handle_text_message(message: types.Message):
 
 async def process_event_or_chat(message: types.Message, raw_text: str):
     extracted = extract_event_details(raw_text)
+    
+    # Резервная отправка копии события/сообщения в n8n Workflow (если N8N_WEBHOOK_URL настроен)
+    send_to_n8n_webhook({
+        "user_id": message.chat.id,
+        "username": message.from_user.username,
+        "text": raw_text,
+        "extracted_event": extracted,
+        "timestamp": datetime.now().isoformat()
+    })
     
     if extracted.get("is_event"):
         title = extracted.get("title", "Дела/Событие")

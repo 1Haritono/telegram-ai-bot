@@ -1,0 +1,186 @@
+{
+  "name": "Antigravity AI Bot Full Architecture Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "telegram-ai-bot",
+        "options": {}
+      },
+      "name": "1. Telegram User Message / Voice",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.body.extracted_event.is_event }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "2. Command / Message Router",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://generativelanguage.googleapis.com",
+        "options": {}
+      },
+      "name": "3. Gemini AI / STT Engine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        540,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "mode",
+              "value": "voice_or_text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "4. Interactive Menu & Mode Check",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        540,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.elevenlabs.io",
+        "options": {}
+      },
+      "name": "5. Multi-TTS Engine (ElevenLabs / Azure / Google)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        760,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": "primary"
+      },
+      "name": "6. Google Calendar & Reminders DB",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [
+        760,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $json.body.user_id }}",
+        "text": "={{ $json.text }}"
+      },
+      "name": "7. Telegram Send Reply (Voice / Text)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        980,
+        310
+      ]
+    }
+  ],
+  "connections": {
+    "1. Telegram User Message / Voice": {
+      "main": [
+        [
+          {
+            "node": "2. Command / Message Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Command / Message Router": {
+      "main": [
+        [
+          {
+            "node": "3. Gemini AI / STT Engine",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "4. Interactive Menu & Mode Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Gemini AI / STT Engine": {
+      "main": [
+        [
+          {
+            "node": "5. Multi-TTS Engine (ElevenLabs / Azure / Google)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Interactive Menu & Mode Check": {
+      "main": [
+        [
+          {
+            "node": "6. Google Calendar & Reminders DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Multi-TTS Engine (ElevenLabs / Azure / Google)": {
+      "main": [
+        [
+          {
+            "node": "7. Telegram Send Reply (Voice / Text)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6. Google Calendar & Reminders DB": {
+      "main": [
+        [
+          {
+            "node": "7. Telegram Send Reply (Voice / Text)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
