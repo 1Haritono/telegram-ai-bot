@@ -113,17 +113,44 @@ def init_db():
         CREATE TABLE IF NOT EXISTS user_settings (
             user_id INTEGER PRIMARY KEY,
             response_mode TEXT DEFAULT 'text',
-            voice_provider TEXT DEFAULT 'auto'
+            voice_provider TEXT DEFAULT 'auto',
+            timezone_offset INTEGER DEFAULT 4
         )
     """)
     try:
         cursor.execute("ALTER TABLE user_settings ADD COLUMN voice_provider TEXT DEFAULT 'auto'")
     except sqlite3.OperationalError:
         pass
+    try:
+        cursor.execute("ALTER TABLE user_settings ADD COLUMN timezone_offset INTEGER DEFAULT 4")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
 
 init_db()
+
+def get_user_timezone(user_id: int) -> int:
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT timezone_offset FROM user_settings WHERE user_id = ?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if row and row[0] is not None:
+        return row[0]
+    return 4
+
+def set_user_timezone(user_id: int, offset: int) -> int:
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO user_settings (user_id, timezone_offset)
+        VALUES (?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET timezone_offset = excluded.timezone_offset
+    """, (user_id, offset))
+    conn.commit()
+    conn.close()
+    return offset
 
 def get_user_response_mode(user_id: int) -> str:
     conn = sqlite3.connect(DB_PATH)
@@ -430,16 +457,22 @@ def get_calendar_service():
         logging.error(f"Ошибка Google Calendar API: {e}")
         return None
 
-def add_google_calendar_event(title: str, start_dt: datetime, end_dt: datetime):
+def add_google_calendar_event(title: str, start_dt: datetime, end_dt: datetime, timezone_offset: int = 4):
     service = get_calendar_service()
     if not service:
         return False, "Файл google_keys.json не привязан."
     
+    tz_sign = "+" if timezone_offset >= 0 else "-"
+    tz_str = f"{tz_sign}{abs(timezone_offset):02d}:00"
+    
+    start_iso = start_dt.strftime("%Y-%m-%dT%H:%M:%S") + tz_str
+    end_iso = end_dt.strftime("%Y-%m-%dT%H:%M:%S") + tz_str
+    
     event = {
         'summary': title,
         'description': 'Автоматическое событие Antigravity Telegram Bot',
-        'start': {'dateTime': start_dt.isoformat(), 'timeZone': 'UTC'},
-        'end': {'dateTime': end_dt.isoformat(), 'timeZone': 'UTC'},
+        'start': {'dateTime': start_iso},
+        'end': {'dateTime': end_iso},
     }
     try:
         created_event = service.events().insert(calendarId=GOOGLE_CALENDAR_ID, body=event).execute()
@@ -448,19 +481,19 @@ def add_google_calendar_event(title: str, start_dt: datetime, end_dt: datetime):
         logging.error(f"Ошибка Google Calendar: {e}")
         return False, str(e)
 
-def extract_event_details(text_or_prompt: str) -> dict:
-    now_dt = datetime.now()
-    current_time_str = now_dt.strftime("%Y-%m-%d %H:%M:%S")
+def extract_event_details(text_or_prompt: str, timezone_offset: int = 4) -> dict:
+    user_now = datetime.utcnow() + timedelta(hours=timezone_offset)
+    current_time_str = user_now.strftime("%Y-%m-%d %H:%M:%S")
     prompt = f"""
 Ты — умный планировщик задач. 
-Текущее точное время сервера: {current_time_str}. День недели: {now_dt.strftime('%A')}.
+Текущее точное время пользователя (UTC+{timezone_offset}): {current_time_str}. День недели: {user_now.strftime('%A')}.
 
 Проанализируй запрос пользователя: "{text_or_prompt}"
 Определи, есть ли в нем просьба о создании события или напоминания.
 
 Важно:
-1. Вычисли время самого СОБЫТИЯ (`event_datetime` в ISO формате YYYY-MM-DDTHH:MM:SS).
-   - Если указано только время (например "в 17:40" или "в 18:00") и это время позже текущего ({now_dt.strftime('%H:%M')}), считай событие СЕГОДНЯ {now_dt.strftime('%Y-%m-%d')}.
+1. Вычисли время самого СОБЫТИЯ (`event_datetime` в ISO формате YYYY-MM-DDTHH:MM:SS) по часовому поясу пользователя.
+   - Если указано только время (например "в 17:40" или "в 18:00" или "на 10") и это время позже текущего ({user_now.strftime('%H:%M')}), считай событие СЕГОДНЯ {user_now.strftime('%Y-%m-%d')}.
    - Если время уже прошло сегодня, считай на ЗАВТРА.
 2. Если пользователь попросил напомнить за конкретное время (например "напомни за 10 минут", "напомни за 2 часа"), вычисли `explicit_remind_datetime`. Если такой явной просьбы нет, установи `explicit_remind_datetime`: null.
 
@@ -837,7 +870,32 @@ async def handle_text_message(message: types.Message):
     await process_event_or_chat(message, corrected_text)
 
 async def process_event_or_chat(message: types.Message, raw_text: str):
-    extracted = extract_event_details(raw_text)
+    user_id = message.chat.id
+    tz_offset = get_user_timezone(user_id)
+    
+    # 1. Проверяем, не пишет ли пользователь свое текущее время (например "сейчас 22:49", "у меня сейчас 15:30", "время 10:00")
+    tz_match = re.search(r'(?:сейчас|время|у меня)\s*(\d{1,2})[:.-](\d{2})', raw_text, re.IGNORECASE)
+    if not tz_match:
+        tz_match = re.search(r'^(\d{1,2})[:.-](\d{2})$', raw_text.strip())
+        
+    if tz_match:
+        u_hour = int(tz_match.group(1))
+        u_min = int(tz_match.group(2))
+        if 0 <= u_hour <= 23 and 0 <= u_min <= 59:
+            utc_now = datetime.utcnow()
+            # Находим сдвиг
+            calc_offset = u_hour - utc_now.hour
+            if calc_offset < -12:
+                calc_offset += 24
+            elif calc_offset > 14:
+                calc_offset -= 24
+            set_user_timezone(user_id, calc_offset)
+            sign = "+" if calc_offset >= 0 else ""
+            reply_tz = f"⚙️ **Часовой пояс обновлен!**\nУстановлено ваше время: **{u_hour:02d}:{u_min:02d}** (UTC{sign}{calc_offset}).\nВсе новые события и напоминания будут точно синхронизированы!"
+            await send_reply(message, reply_tz, parse_mode="Markdown")
+            return
+
+    extracted = extract_event_details(raw_text, timezone_offset=tz_offset)
     
     # Резервная отправка копии события/сообщения в n8n Workflow (если N8N_WEBHOOK_URL настроен)
     send_to_n8n_webhook({
@@ -845,6 +903,7 @@ async def process_event_or_chat(message: types.Message, raw_text: str):
         "username": message.from_user.username,
         "text": raw_text,
         "extracted_event": extracted,
+        "timezone_offset": tz_offset,
         "timestamp": datetime.now().isoformat()
     })
     
@@ -859,12 +918,13 @@ async def process_event_or_chat(message: types.Message, raw_text: str):
             end_dt = event_dt + timedelta(hours=1)
             
             save_reminder_stages(message.chat.id, title, event_dt, explicit_remind_dt)
-            cal_success, cal_link_or_err = add_google_calendar_event(title, event_dt, end_dt)
+            cal_success, cal_link_or_err = add_google_calendar_event(title, event_dt, end_dt, timezone_offset=tz_offset)
             cal_info = f"\n📅 [В Календаре]({cal_link_or_err})" if cal_success else ""
             
+            sign = "+" if tz_offset >= 0 else ""
             reply_text = (
                 f"Запланировано: **{title}**\n"
-                f"⏰ Время: {event_dt.strftime('%d.%m.%Y в %H:%M')}{cal_info}\n"
+                f"⏰ Время: {event_dt.strftime('%d.%m.%Y в %H:%M')} (UTC{sign}{tz_offset}){cal_info}\n"
                 f"Напоминания установлены!"
             )
             
