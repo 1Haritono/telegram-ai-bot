@@ -1,5 +1,5 @@
 {
-  "name": "Antigravity AI Bot Full Architecture Workflow",
+  "name": "Antigravity AI Bot Full Ecosystem Architecture",
   "nodes": [
     {
       "parameters": {
@@ -7,12 +7,12 @@
         "path": "telegram-ai-bot",
         "options": {}
       },
-      "name": "1. Telegram User Message / Voice",
+      "name": "1. Сообщение / Голосовая связь Telegram",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        100,
-        300
+        80,
+        360
       ]
     },
     {
@@ -26,12 +26,12 @@
           ]
         }
       },
-      "name": "2. Command / Message Router",
+      "name": "2. Маршрутизатор команд и сервисов",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        320,
-        300
+        300,
+        360
       ]
     },
     {
@@ -39,12 +39,12 @@
         "url": "https://generativelanguage.googleapis.com",
         "options": {}
       },
-      "name": "3. Gemini AI / STT Engine",
+      "name": "3. Gemini AI & Распознавание речи STT",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
       "position": [
-        540,
-        200
+        520,
+        180
       ]
     },
     {
@@ -59,12 +59,12 @@
         },
         "options": {}
       },
-      "name": "4. Interactive Menu & Mode Check",
+      "name": "4. Интерактивное меню и проверка режимов",
       "type": "n8n-nodes-base.set",
       "typeVersion": 1,
       "position": [
-        540,
-        420
+        520,
+        500
       ]
     },
     {
@@ -72,12 +72,12 @@
         "url": "https://api.elevenlabs.io",
         "options": {}
       },
-      "name": "5. Multi-TTS Engine (ElevenLabs / Azure / Google)",
+      "name": "5. Многофункциональный TTS (ElevenLabs / Azure / Google)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
       "position": [
-        760,
-        200
+        740,
+        180
       ]
     },
     {
@@ -85,12 +85,85 @@
         "operation": "getAll",
         "calendar": "primary"
       },
-      "name": "6. Google Calendar & Reminders DB",
+      "name": "6. Google Календарь и Напоминания",
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1,
       "position": [
-        760,
-        420
+        740,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://keep.googleapis.com",
+        "options": {}
+      },
+      "name": "7. Google Keep (Заметки и Заметки-списки)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        740,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://tasks.googleapis.com",
+        "options": {}
+      },
+      "name": "8. Google Tasks (Менеджер задач)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        740,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://people.googleapis.com",
+        "options": {}
+      },
+      "name": "9. Google Contacts (Адресная книга)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        960,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "name": "10. Google Sheets (Таблицы и Отчеты)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        960,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://forms.googleapis.com",
+        "options": {}
+      },
+      "name": "11. Google Forms (Опросы и Анкеты)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        960,
+        660
       ]
     },
     {
@@ -99,83 +172,148 @@
         "chatId": "={{ $json.body.user_id }}",
         "text": "={{ $json.text }}"
       },
-      "name": "7. Telegram Send Reply (Voice / Text)",
+      "name": "12. Telegram Отправить ответ (Голосовой / Текстовый)",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.1,
       "position": [
-        980,
-        310
+        1200,
+        420
       ]
     }
   ],
   "connections": {
-    "1. Telegram User Message / Voice": {
+    "1. Сообщение / Голосовая связь Telegram": {
       "main": [
         [
           {
-            "node": "2. Command / Message Router",
+            "node": "2. Маршрутизатор команд и сервисов",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "2. Command / Message Router": {
+    "2. Маршрутизатор команд и сервисов": {
       "main": [
         [
           {
-            "node": "3. Gemini AI / STT Engine",
+            "node": "3. Gemini AI & Распознавание речи STT",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "4. Interactive Menu & Mode Check",
+            "node": "4. Интерактивное меню и проверка режимов",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "3. Gemini AI / STT Engine": {
+    "3. Gemini AI & Распознавание речи STT": {
       "main": [
         [
           {
-            "node": "5. Multi-TTS Engine (ElevenLabs / Azure / Google)",
+            "node": "5. Многофункциональный TTS (ElevenLabs / Azure / Google)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "4. Interactive Menu & Mode Check": {
+    "4. Интерактивное меню и проверка режимов": {
       "main": [
         [
           {
-            "node": "6. Google Calendar & Reminders DB",
+            "node": "6. Google Календарь и Напоминания",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "7. Google Keep (Заметки и Заметки-списки)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "8. Google Tasks (Менеджер задач)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "5. Multi-TTS Engine (ElevenLabs / Azure / Google)": {
+    "5. Многофункциональный TTS (ElevenLabs / Azure / Google)": {
       "main": [
         [
           {
-            "node": "7. Telegram Send Reply (Voice / Text)",
+            "node": "12. Telegram Отправить ответ (Голосовой / Текстовый)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "6. Google Calendar & Reminders DB": {
+    "6. Google Календарь и Напоминания": {
       "main": [
         [
           {
-            "node": "7. Telegram Send Reply (Voice / Text)",
+            "node": "9. Google Contacts (Адресная книга)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7. Google Keep (Заметки и Заметки-списки)": {
+      "main": [
+        [
+          {
+            "node": "10. Google Sheets (Таблицы и Отчеты)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8. Google Tasks (Менеджер задач)": {
+      "main": [
+        [
+          {
+            "node": "11. Google Forms (Опросы и Анкеты)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9. Google Contacts (Адресная книга)": {
+      "main": [
+        [
+          {
+            "node": "12. Telegram Отправить ответ (Голосовой / Текстовый)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10. Google Sheets (Таблицы и Отчеты)": {
+      "main": [
+        [
+          {
+            "node": "12. Telegram Отправить ответ (Голосовой / Текстовый)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "11. Google Forms (Опросы и Анкеты)": {
+      "main": [
+        [
+          {
+            "node": "12. Telegram Отправить ответ (Голосовой / Текстовый)",
             "type": "main",
             "index": 0
           }
