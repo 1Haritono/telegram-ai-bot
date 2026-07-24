@@ -1,5 +1,5 @@
 {
-  "name": "Antigravity AI Bot Full Ecosystem Architecture",
+  "name": "Antigravity AI Bot Ultimate Master Ecosystem Workflow",
   "nodes": [
     {
       "parameters": {
@@ -11,8 +11,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        80,
-        360
+        0,
+        700
       ]
     },
     {
@@ -26,12 +26,12 @@
           ]
         }
       },
-      "name": "2. Маршрутизатор команд и сервисов",
+      "name": "2. Умный Маршрутизатор задач и команд",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        300,
-        360
+        360,
+        700
       ]
     },
     {
@@ -39,12 +39,12 @@
         "url": "https://generativelanguage.googleapis.com",
         "options": {}
       },
-      "name": "3. Gemini AI & Распознавание речи STT",
+      "name": "3. Gemini 1.5 Pro AI Engine & STT",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
       "position": [
-        520,
-        180
+        720,
+        300
       ]
     },
     {
@@ -59,12 +59,12 @@
         },
         "options": {}
       },
-      "name": "4. Интерактивное меню и проверка режимов",
+      "name": "4. Настройки меню и форматирование",
       "type": "n8n-nodes-base.set",
       "typeVersion": 1,
       "position": [
-        520,
-        500
+        720,
+        900
       ]
     },
     {
@@ -72,12 +72,12 @@
         "url": "https://api.elevenlabs.io",
         "options": {}
       },
-      "name": "5. Многофункциональный TTS (ElevenLabs / Azure / Google)",
+      "name": "5. Мульти-Голосовой Каскад (ElevenLabs/Azure/Google)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
       "position": [
-        740,
-        180
+        1080,
+        100
       ]
     },
     {
@@ -88,9 +88,15 @@
       "name": "6. Google Календарь и Напоминания",
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "antigravity_credentials",
+          "name": "Antigravity Google OAuth2"
+        }
+      },
       "position": [
-        740,
-        340
+        1080,
+        320
       ]
     },
     {
@@ -98,38 +104,48 @@
         "url": "https://keep.googleapis.com",
         "options": {}
       },
-      "name": "7. Google Keep (Заметки и Заметки-списки)",
+      "name": "7. Google Keep (Заметки и Чек-листы)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
       "position": [
-        740,
-        500
+        1080,
+        540
       ]
     },
     {
       "parameters": {
-        "url": "https://tasks.googleapis.com",
-        "options": {}
+        "operation": "getAll"
       },
       "name": "8. Google Tasks (Менеджер задач)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
+      "type": "n8n-nodes-base.googleTasks",
+      "typeVersion": 1,
+      "credentials": {
+        "googleTasksOAuth2Api": {
+          "id": "antigravity_credentials",
+          "name": "Antigravity Google OAuth2"
+        }
+      },
       "position": [
-        740,
-        660
+        1080,
+        760
       ]
     },
     {
       "parameters": {
-        "url": "https://people.googleapis.com",
-        "options": {}
+        "operation": "getAll"
       },
       "name": "9. Google Contacts (Адресная книга)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
+      "type": "n8n-nodes-base.googleContacts",
+      "typeVersion": 1,
+      "credentials": {
+        "googleContactsOAuth2Api": {
+          "id": "antigravity_credentials",
+          "name": "Antigravity Google OAuth2"
+        }
+      },
       "position": [
-        960,
-        340
+        1080,
+        980
       ]
     },
     {
@@ -148,9 +164,15 @@
       "name": "10. Google Sheets (Таблицы и Отчеты)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "antigravity_credentials",
+          "name": "Antigravity Google OAuth2"
+        }
+      },
       "position": [
-        960,
-        500
+        1080,
+        1200
       ]
     },
     {
@@ -162,8 +184,96 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
       "position": [
-        960,
+        1080,
+        1420
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://html.duckduckgo.com/html",
+        "options": {}
+      },
+      "name": "12. Веб-Поиск в реальном времени (Web Search)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1440,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll"
+      },
+      "name": "13. Gmail (Чтение и Отправка почты)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "antigravity_credentials",
+          "name": "Antigravity Gmail OAuth2"
+        }
+      },
+      "position": [
+        1440,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get"
+      },
+      "name": "14. Google Docs & PDF Анализатор",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "antigravity_credentials",
+          "name": "Antigravity Google Docs OAuth2"
+        }
+      },
+      "position": [
+        1440,
         660
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.openai.com/v1/images/generations",
+        "options": {}
+      },
+      "name": "15. Генерация изображений (DALL-E 3 / Flux)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1440,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.suno.ai",
+        "options": {}
+      },
+      "name": "16. Музыкальный синтез и Аудиоэффекты",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1440,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.pinecone.io",
+        "options": {}
+      },
+      "name": "17. Долгосрочная Векторная Память (Pinecone)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1440,
+        1320
       ]
     },
     {
@@ -172,12 +282,18 @@
         "chatId": "={{ $json.body.user_id }}",
         "text": "={{ $json.text }}"
       },
-      "name": "12. Telegram Отправить ответ (Голосовой / Текстовый)",
+      "name": "18. Telegram Финальная Отправка (Голос / Текст / Файл)",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.1,
+      "credentials": {
+        "telegramApi": {
+          "id": "antigravity_credentials",
+          "name": "Antigravity Telegram Token"
+        }
+      },
       "position": [
-        1200,
-        420
+        1800,
+        700
       ]
     }
   ],
@@ -186,43 +302,43 @@
       "main": [
         [
           {
-            "node": "2. Маршрутизатор команд и сервисов",
+            "node": "2. Умный Маршрутизатор задач и команд",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "2. Маршрутизатор команд и сервисов": {
+    "2. Умный Маршрутизатор задач и команд": {
       "main": [
         [
           {
-            "node": "3. Gemini AI & Распознавание речи STT",
+            "node": "3. Gemini 1.5 Pro AI Engine & STT",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "4. Интерактивное меню и проверка режимов",
+            "node": "4. Настройки меню и форматирование",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "3. Gemini AI & Распознавание речи STT": {
+    "3. Gemini 1.5 Pro AI Engine & STT": {
       "main": [
         [
           {
-            "node": "5. Многофункциональный TTS (ElevenLabs / Azure / Google)",
+            "node": "5. Мульти-Голосовой Каскад (ElevenLabs/Azure/Google)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "4. Интерактивное меню и проверка режимов": {
+    "4. Настройки меню и форматирование": {
       "main": [
         [
           {
@@ -231,7 +347,7 @@
             "index": 0
           },
           {
-            "node": "7. Google Keep (Заметки и Заметки-списки)",
+            "node": "7. Google Keep (Заметки и Чек-листы)",
             "type": "main",
             "index": 0
           },
@@ -239,15 +355,30 @@
             "node": "8. Google Tasks (Менеджер задач)",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "9. Google Contacts (Адресная книга)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "10. Google Sheets (Таблицы и Отчеты)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "11. Google Forms (Опросы и Анкеты)",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
     },
-    "5. Многофункциональный TTS (ElevenLabs / Azure / Google)": {
+    "5. Мульти-Голосовой Каскад (ElevenLabs/Azure/Google)": {
       "main": [
         [
           {
-            "node": "12. Telegram Отправить ответ (Голосовой / Текстовый)",
+            "node": "12. Веб-Поиск в реальном времени (Web Search)",
             "type": "main",
             "index": 0
           }
@@ -258,18 +389,18 @@
       "main": [
         [
           {
-            "node": "9. Google Contacts (Адресная книга)",
+            "node": "13. Gmail (Чтение и Отправка почты)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "7. Google Keep (Заметки и Заметки-списки)": {
+    "7. Google Keep (Заметки и Чек-листы)": {
       "main": [
         [
           {
-            "node": "10. Google Sheets (Таблицы и Отчеты)",
+            "node": "14. Google Docs & PDF Анализатор",
             "type": "main",
             "index": 0
           }
@@ -280,7 +411,7 @@
       "main": [
         [
           {
-            "node": "11. Google Forms (Опросы и Анкеты)",
+            "node": "15. Генерация изображений (DALL-E 3 / Flux)",
             "type": "main",
             "index": 0
           }
@@ -291,7 +422,7 @@
       "main": [
         [
           {
-            "node": "12. Telegram Отправить ответ (Голосовой / Текстовый)",
+            "node": "16. Музыкальный синтез и Аудиоэффекты",
             "type": "main",
             "index": 0
           }
@@ -302,18 +433,73 @@
       "main": [
         [
           {
-            "node": "12. Telegram Отправить ответ (Голосовой / Текстовый)",
+            "node": "17. Долгосрочная Векторная Память (Pinecone)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "11. Google Forms (Опросы и Анкеты)": {
+    "12. Веб-Поиск в реальном времени (Web Search)": {
       "main": [
         [
           {
-            "node": "12. Telegram Отправить ответ (Голосовой / Текстовый)",
+            "node": "18. Telegram Финальная Отправка (Голос / Текст / Файл)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "13. Gmail (Чтение и Отправка почты)": {
+      "main": [
+        [
+          {
+            "node": "18. Telegram Финальная Отправка (Голос / Текст / Файл)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "14. Google Docs & PDF Анализатор": {
+      "main": [
+        [
+          {
+            "node": "18. Telegram Финальная Отправка (Голос / Текст / Файл)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "15. Генерация изображений (DALL-E 3 / Flux)": {
+      "main": [
+        [
+          {
+            "node": "18. Telegram Финальная Отправка (Голос / Текст / Файл)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "16. Музыкальный синтез и Аудиоэффекты": {
+      "main": [
+        [
+          {
+            "node": "18. Telegram Финальная Отправка (Голос / Текст / Файл)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "17. Долгосрочная Векторная Память (Pinecone)": {
+      "main": [
+        [
+          {
+            "node": "18. Telegram Финальная Отправка (Голос / Текст / Файл)",
             "type": "main",
             "index": 0
           }
