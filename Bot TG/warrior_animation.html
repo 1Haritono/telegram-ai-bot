@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warrior Queen: Battle Rage 5s Scene</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0b090a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: Georgia, serif;
+        }
+        h1 {
+            color: #f4a261;
+            font-size: 20px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 12px;
+            text-shadow: 0 0 12px rgba(244,162,97,0.6);
+        }
+        .wrap {
+            border: 3px solid #e76f51;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(230,57,70,0.45), 0 0 80px #000;
+        }
+        canvas { display: block; }
+        .controls {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        button {
+            background: linear-gradient(135deg,#e76f51,#b5179e);
+            border: none; color: #fff;
+            padding: 11px 26px;
+            font-size: 15px; font-weight: bold;
+            text-transform: uppercase; letter-spacing: 1px;
+            border-radius: 30px; cursor: pointer;
+            box-shadow: 0 4px 14px rgba(231,111,81,0.4);
+            transition: all .2s;
+        }
+        button:hover { transform: translateY(-2px) scale(1.03); }
+        button:active { transform: translateY(1px); }
+        .bar { width: 270px; height: 8px; background: #2b2d42; border-radius: 4px; overflow: hidden; border: 1px solid #4a4e69; }
+        .fill { height: 100%; width: 0%; background: linear-gradient(90deg,#f4a261,#e63946,#ffb703); }
+        .lbl { color: #a8dede; font-family: monospace; font-size: 14px; }
+    </style>
+</head>
+<body>
+<h1>🔥 Warrior Queen: Battle Rage 5s 🔥</h1>
+<div class="wrap">
+    <canvas id="c" width="540" height="810"></canvas>
+</div>
+<div class="controls">
+    <button id="btn">▶ Воспроизвести (5 сек)</button>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+    <span class="lbl" id="lbl">0.00s / 5.00s</span>
+</div>
+
+<script>
+const W = 540, H = 810;
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const btn = document.getElementById('btn');
+const fill = document.getElementById('fill');
+const lbl = document.getElementById('lbl');
+
+// — Загрузка изображений —
+const imgA = new Image(); // спокойствие
+const imgB = new Image(); // ярость
+const imgDisc = new Image(); // арт диска
+imgA.src = 'frame_calm.jpg';
+imgB.src = 'frame_rage.jpg';
+imgDisc.src = 'discus.png';
+
+let ready = 0;
+function onLoad(){ if(++ready>=2) drawStatic(); }
+imgA.onload = imgB.onload = onLoad;
+imgA.onerror = imgB.onerror = () => console.warn('Image load failed');
+
+// — Частицы —
+const parts = [];
+class Pt {
+    constructor(x,y,vx,vy,col,r,life){
+        Object.assign(this,{x,y,vx,vy,col,r,life,maxL:life});
+    }
+    tick(){ this.x+=this.vx; this.y+=this.vy; this.vy+=0.14; this.life--; }
+    draw(){
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.life/this.maxL);
+        ctx.fillStyle = this.col;
+        ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill();
+        ctx.restore();
+    }
+}
+
+function burst(x,y){
+    for(let i=0;i<60;i++){
+        const a=Math.random()*Math.PI*2, s=Math.random()*10+2;
+        parts.push(new Pt(x,y,Math.cos(a)*s,Math.sin(a)*s,
+            Math.random()>.3?'#ffb703':'#e63946', Math.random()*4+1, Math.random()*35+15));
+    }
+    for(let i=0;i<40;i++){
+        const a=Math.random()*Math.PI*2, s=Math.random()*4+.5;
+        parts.push(new Pt(x,y,Math.cos(a)*s,Math.sin(a)*s,
+            '#c9a96e', Math.random()*8+3, Math.random()*55+25));
+    }
+}
+
+// — Состояние —
+let playing=false, t0=null, ricochetDone=false;
+const DUR=5000;
+
+// — Вспомогательные функции отрисовки —
+function drawBg(rage){
+    // Динамическое затемнение фона при ярости
+    const g=ctx.createLinearGradient(0,0,0,H);
+    const top = lerpColor('#d4872a','#2a0000',rage);
+    const bot = lerpColor('#5c2a00','#000000',rage);
+    g.addColorStop(0,top); g.addColorStop(1,bot);
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+}
+
+function lerpColor(a,b,t){
+    const ah=[parseInt(a.slice(1,3),16),parseInt(a.slice(3,5),16),parseInt(a.slice(5,7),16)];
+    const bh=[parseInt(b.slice(1,3),16),parseInt(b.slice(3,5),16),parseInt(b.slice(5,7),16)];
+    const r=Math.round(ah[0]+(bh[0]-ah[0])*t);
+    const g=Math.round(ah[1]+(bh[1]-ah[1])*t);
+    const bv=Math.round(ah[2]+(bh[2]-ah[2])*t);
+    return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${bv.toString(16).padStart(2,'0')}`;
+}
+
+// Draw full-canvas image centered & cover
+function drawImg(img, alpha, scale=1.0, offY=0){
+    if(!img.complete || !img.naturalWidth) return;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    const iw=img.naturalWidth, ih=img.naturalHeight;
+    const ratio=Math.max(W/iw, H/ih)*scale;
+    const dw=iw*ratio, dh=ih*ratio;
+    const dx=(W-dw)/2, dy=(H-dh)/2+offY;
+    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.restore();
+}
+
+function drawEyeGlow(intensity){
+    if(intensity<=0) return;
+    // Примерные позиции глаз на кадре "спокойствие" (воительница по центру)
+    const eyes = [{x:W*0.43, y:H*0.195},{x:W*0.57, y:H*0.195}];
+    ctx.save();
+    ctx.shadowColor='#ffb703';
+    ctx.shadowBlur=30*intensity;
+    ctx.fillStyle=`rgba(255,200,0,${intensity*0.95})`;
+    eyes.forEach(e=>{
+        ctx.beginPath();
+        ctx.arc(e.x,e.y,7*intensity+3,0,Math.PI*2);
+        ctx.fill();
+    });
+    ctx.restore();
+}
+
+function drawDiscus(elapsed2){
+    // Точки маршрута (рука воительницы → стена → обратно)
+    const sx=W*0.68, sy=H*0.62;   // старт: рука персонажа
+    const wx=W*0.93, wy=H*0.17;   // цель: стена замка справа вверху
+    let x, y;
+    const rot = elapsed2 * 0.028; // скорость вращения
+
+    if(elapsed2 < 1000){
+        // Бросок по параболе к стене
+        const tt = elapsed2 / 1000;
+        x = sx + (wx - sx) * tt;
+        y = sy + (wy - sy) * tt - Math.sin(tt * Math.PI) * 100;
+        ricochetDone = false;
+    } else if(elapsed2 < 1100){
+        // Удар о стену
+        x = wx; y = wy;
+        if(!ricochetDone){ burst(wx, wy); ricochetDone = true; }
+    } else {
+        // Возврат в руку по дуге
+        const tt = Math.min((elapsed2 - 1100) / 1900, 1);
+        x = wx + (sx - wx) * tt;
+        y = wy + (sy - wy) * tt + Math.sin(tt * Math.PI) * 140;
+    }
+
+    // === Тянущийся светящийся шлейф ===
+    ctx.save();
+    // Несколько слоев шлейфа для объёма
+    for(let trail=3; trail>0; trail--){
+        const tOff = trail * 22;
+        const trailDir = elapsed2 < 1100 ? -1 : 1;
+        const tx = x - Math.cos(rot) * tOff * trailDir;
+        const ty = y - Math.sin(rot) * tOff * trailDir;
+        const alpha = (0.12 * (4 - trail));
+        ctx.globalAlpha = alpha;
+        ctx.shadowColor = '#ff8800';
+        ctx.shadowBlur = 30;
+        if(imgDisc.complete && imgDisc.naturalWidth > 0){
+            const ts = 55 - trail * 8; // уменьшается с расстоянием
+            ctx.save();
+            ctx.translate(tx, ty);
+            ctx.rotate(rot - trail * 0.2 * trailDir);
+            ctx.drawImage(imgDisc, -ts/2, -ts/2, ts, ts);
+            ctx.restore();
+        }
+    }
+    ctx.restore();
+
+    // === Основной диск (живописный спрайт) ===
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+
+    // Перспективный squish — диск чуть сплюснут в полёте
+    const squish = 0.72 + Math.abs(Math.sin(rot)) * 0.28;
+    ctx.scale(1.0, squish);
+
+    // Размер диска
+    const ds = 80;
+
+    if(imgDisc.complete && imgDisc.naturalWidth > 0){
+        // Золотое свечение вокруг диска
+        ctx.shadowColor = '#ffaa00';
+        ctx.shadowBlur = 18;
+        ctx.globalAlpha = 0.25;
+        ctx.drawImage(imgDisc, -ds/2 - 6, -ds/2 - 6, ds + 12, ds + 12);
+
+        // Сам диск
+        ctx.globalAlpha = 1.0;
+        ctx.shadowColor = '#ff6600';
+        ctx.shadowBlur = 12;
+        ctx.drawImage(imgDisc, -ds/2, -ds/2, ds, ds);
+    } else {
+        // Fallback если изображение не загружено
+        ctx.fillStyle = '#c0c0c0';
+        ctx.strokeStyle = '#d4af37';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(0, 0, 35, 0, Math.PI*2);
+        ctx.fill(); ctx.stroke();
+    }
+
+    ctx.restore();
+
+    // === Яркая вспышка в момент рикошета ===
+    if(elapsed2 >= 1000 && elapsed2 < 1200){
+        const ft = 1 - (elapsed2 - 1000) / 200;
+        ctx.save();
+        ctx.globalAlpha = ft * 0.7;
+        const flashGrad = ctx.createRadialGradient(wx, wy, 0, wx, wy, 80);
+        flashGrad.addColorStop(0, '#ffffff');
+        flashGrad.addColorStop(0.4, '#ffaa00');
+        flashGrad.addColorStop(1, 'rgba(255,100,0,0)');
+        ctx.fillStyle = flashGrad;
+        ctx.fillRect(wx - 85, wy - 85, 170, 170);
+        ctx.restore();
+    }
+}
+
+function drawVignette(){
+    const g=ctx.createRadialGradient(W/2,H/2,H*0.35,W/2,H/2,H*0.75);
+    g.addColorStop(0,'rgba(0,0,0,0)');
+    g.addColorStop(1,'rgba(0,0,0,0.65)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+}
+
+function drawStatic(){
+    ctx.clearRect(0,0,W,H);
+    drawBg(0);
+    drawImg(imgA, 1.0);
+    drawVignette();
+}
+
+// — Основной цикл анимации —
+function frame(ts){
+    if(!t0) t0=ts;
+    const el=ts-t0;
+    const ratio=Math.min(el/DUR,1);
+    fill.style.width=(ratio*100)+'%';
+    lbl.textContent=`${Math.min(el/1000,5).toFixed(2)}s / 5.00s`;
+
+    // Camera shake at ricochet
+    let sx=0, sy=0;
+    if(el>=3000 && el<=3450){ sx=(Math.random()-.5)*18; sy=(Math.random()-.5)*18; }
+
+    ctx.save();
+    ctx.translate(sx,sy);
+    ctx.clearRect(-20,-20,W+40,H+40);
+
+    // Blend factor: calm → rage (0.8s → 2.2s)
+    const rage = el<800 ? 0 : Math.min((el-800)/1400,1);
+
+    drawBg(rage);
+
+    // Cross-fade: Calm fades out (0→1s), Rage fades in (0.8→2.2s)
+    const alphaA = Math.max(0,1-(el<800?0:(el-800)/1400));
+    const alphaB = rage;
+
+    // Scale up slightly over time for cinematic zoom
+    const zoom = 1+ratio*0.04;
+
+    // Calm image: slight upward pan as rage kicks in
+    if(alphaA>0.01) drawImg(imgA, alphaA, zoom, -(rage*30));
+
+    // Rage image: pans in from below, zoomed
+    if(alphaB>0.01) drawImg(imgB, alphaB, zoom, (1-rage)*60);
+
+    // Eye glow during transition
+    if(el>=1000 && el<=2600){
+        const t=(el-1000)/1600;
+        const glow=Math.sin(t*Math.PI);
+        drawEyeGlow(glow);
+    }
+
+    // Discus from 2.0s onward
+    if(el>=2000) drawDiscus(el-2000);
+
+    // Particles
+    for(let i=parts.length-1;i>=0;i--){
+        parts[i].tick(); parts[i].draw();
+        if(parts[i].life<=0) parts.splice(i,1);
+    }
+
+    // Flash screen on throw (2.0s)
+    if(el>=2000 && el<2150){
+        const ft=1-(el-2000)/150;
+        ctx.save(); ctx.globalAlpha=ft*0.35;
+        ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+        ctx.restore();
+    }
+
+    drawVignette();
+    ctx.restore();
+
+    if(el<DUR) requestAnimationFrame(frame);
+    else {
+        playing=false;
+        btn.textContent='🔁 Перезапустить (5 сек)';
+    }
+}
+
+btn.addEventListener('click',()=>{
+    if(playing) return;
+    playing=true; t0=null;
+    parts.length=0; ricochetDone=false;
+    btn.textContent='⏳ Анимация идет...';
+    requestAnimationFrame(frame);
+});
+
+// Static first frame
+imgA.complete && imgB.complete && ready>=2 ? drawStatic() : null;
+</script>
+</body>
+</html>
