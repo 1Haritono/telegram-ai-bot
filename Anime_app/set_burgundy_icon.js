@@ -1,0 +1,27 @@
+const fs = require('fs');
+const path = require('path');
+
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="110" fill="#6b0d25"/>
+  <rect x="4" y="4" width="504" height="504" rx="106" fill="none" stroke="#ffffff" stroke-width="12"/>
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe259" />
+      <stop offset="50%" stop-color="#ffa751" />
+      <stop offset="100%" stop-color="#e65c00" />
+    </linearGradient>
+  </defs>
+  <g>
+    <path d="M 65 360 L 115 200 H 155 L 205 360 H 170 L 158 318 H 112 L 100 360 Z M 121 286 H 149 L 135 236 Z" fill="#ffffff"/>
+    <circle cx="218" cy="212" r="10" fill="url(#goldGrad)"/>
+    <circle cx="256" cy="190" r="12" fill="url(#goldGrad)"/>
+    <circle cx="294" cy="212" r="10" fill="url(#goldGrad)"/>
+    <path d="M 218 222 L 236 270 L 256 214 L 276 270 L 294 222 L 310 326 H 202 Z" fill="url(#goldGrad)"/>
+    <rect x="202" y="342" width="108" height="18" rx="4" fill="url(#goldGrad)"/>
+    <path d="M 307 200 H 337 V 264 H 381 V 200 H 411 V 360 H 381 V 292 H 337 V 360 H 307 Z" fill="#ffffff"/>
+  </g>
+</svg>`;
+
+fs.writeFileSync(path.join(__dirname, 'public/icon.svg'), svg);
+fs.writeFileSync(path.join(__dirname, 'public/favicon.svg'), svg);
+console.log('Burgundy 3D Gold icon saved as primary app icon.');

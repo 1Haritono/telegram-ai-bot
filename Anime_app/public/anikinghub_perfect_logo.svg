@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background Card (Dark Rounded Square) -->
+  <rect width="512" height="512" rx="110" fill="#0f1015"/>
+  <rect x="2" y="2" width="508" height="508" rx="108" fill="none" stroke="#262938" stroke-width="4"/>
+
+  <g fill="#ffffff">
+    <!-- Letter A -->
+    <path d="M 85 360 L 132 205 H 168 L 215 360 H 183 L 172 320 H 128 L 117 360 Z M 136 290 H 164 L 150 240 Z"/>
+
+    <!-- Compressed Crown Geometry -->
+    <!-- Crown Peaks at top Y=205 -->
+    <circle cx="218" cy="212" r="10" />
+    <circle cx="256" cy="190" r="12" />
+    <circle cx="294" cy="212" r="10" />
+
+    <!-- Crown Body (Compressed height, bottom baseline raised to 326) -->
+    <path d="M 218 222 L 236 270 L 256 214 L 276 270 L 294 222 L 310 326 H 202 Z" />
+
+    <!-- Empty Gap (Spacing Y=326 to Y=340) -->
+
+    <!-- Base Bar (Bottom aligned with letters A & K at Y=360) -->
+    <rect x="202" y="342" width="108" height="18" rx="4" />
+
+    <!-- Letter K -->
+    <path d="M 297 205 H 325 V 270 L 375 205 H 410 L 355 275 L 415 360 H 378 L 335 295 L 325 310 V 360 H 297 Z"/>
+  </g>
+</svg>
